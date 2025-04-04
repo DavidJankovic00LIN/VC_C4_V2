@@ -50,12 +50,12 @@ int Cpu::get_ip()
 			write_hard(ADDR_START,0); //zaustavi IP(postavi start na 0)
 			done=true;
 		}else{
-			wait(100000,SC_NS); // cekaj dok hardverska komponenta ne zavrsi
+			wait(10,SC_NS); // cekaj dok hardverska komponenta ne zavrsi
 		}
 	}	
 	//SC_REPORT_INFO("CPU","Geting winner value");
 	int ip_result=read_hard(ADDR_WIN_VAL); // procitaj rezultat iz hardvera
-	//SC_REPORT_INFO("CPU","HARD processing done");
+	//cout<<"IP RES "<<ip_result<<endl;
 	return ip_result;
 }
 
@@ -113,8 +113,8 @@ int Cpu::game_play()
 		tempAI=AIManager();
 		write_bram(tempAI,'O');
 		Board();
-		get_ip();
-		int Win_Value=ip_result; //cita stanje pobednika sa registra
+		
+		int Win_Value=get_ip(); //cita stanje pobednika sa registra
 
 		if(Win_Value!=0)
 		{
@@ -278,8 +278,9 @@ int Cpu::AIManager()
 		if(PlayNumber!=0)
 		{
 			write_bram(PlayNumber,'O');
-			get_ip();
-			if(ip_result==2)
+			int ip_temp=get_ip();
+
+			if(ip_temp==2)
 			{
 				write_bram(PlayNumber,' ');
 				return PlayNumber;
@@ -375,7 +376,7 @@ int Cpu::NegaMax(int Depth) {
     char XO;
     int PlayNumber[8] = {0,0,0,0,0,0,0,0}; 
     int chance = 0;
-    
+    int ip_temp;
     if (Depth % 2 != 0)
         XO = 'X';
     else
@@ -387,9 +388,10 @@ int Cpu::NegaMax(int Depth) {
     for (int column = 1; column <= 7; column++) {
         if (PlayNumber[column] != 0) {
             write_bram(PlayNumber[column], XO);
-            get_ip();
+			
+            ip_temp=get_ip();
 
-            if (ip_result != 0) {
+            if (ip_temp != 0) {
                 PlayOut++;
                 if (XO == 'O') EVA++;
                 else EVA--;
@@ -405,8 +407,8 @@ int Cpu::NegaMax(int Depth) {
             int temp = 0;
             if (PlayNumber[column] != 0) {
                 write_bram(PlayNumber[column], XO);
-                get_ip();
-                if (ip_result != 0) {
+                ip_temp=get_ip();
+                if (ip_temp != 0) {
                     PlayOut++;
                     if (XO == 'O') EVA++;
                     else EVA--;
@@ -423,11 +425,9 @@ int Cpu::NegaMax(int Depth) {
         }
     }
     
-    // Dodajemo eksplicitni return na kraju funkcije
+
     return -chance;
 }
-
-// funkcije za komunikaciju za bram i hardom
 
 void Cpu::write_bram(sc_uint<64> addr, unsigned char val)
 {
@@ -465,14 +465,14 @@ void Cpu::read_bram(sc_uint<64> addr,unsigned char *all_data, int length)
 		interconnect_socket->b_transport(pl,offset);
 
 		all_data[n]=buf;
-      //  SC_REPORT_INFO("CPU", ("BRAM READ - Addr: " + std::to_string(addr + i) + ", Data: '" + std::string(1, buf) + "' (ASCII " + std::to_string((int)buf) + ")").c_str());
+      //SC_REPORT_INFO("CPU", ("BRAM READ - Addr: " + std::to_string(addr + i) + ", Data: '" + std::string(1, buf) + "' (ASCII " + std::to_string((int)buf) + ")").c_str());
 
 		n++;
 	}
 
 }
  
-// proveri da li treba uint8_t mesto int kao tip funkcije, kao i neohodnu sisrinu buffera?
+
 int Cpu::read_hard(sc_uint<64> addr)
 {
     //SC_REPORT_INFO("CPU", ("HARD READ START - Addr: " + std::to_string(addr)).c_str());

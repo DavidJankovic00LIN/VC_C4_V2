@@ -31,7 +31,11 @@ void Hard::b_transport(pl_t &pl,sc_time &offset)
 			case ADDR_START:
 				start=toInt(buf);
 				//cout<<"start= "<<start<<endl;
+				if( start==1 && ready==1){
+				ready=0;
 				winning(offset);
+				ready=1;	
+				}
 				break;
 			default:
 				pl.set_response_status(TLM_ADDRESS_ERROR_RESPONSE);
@@ -65,34 +69,10 @@ void Hard::b_transport(pl_t &pl,sc_time &offset)
 
 
 
-
-
-    //SC_REPORT_INFO("HARD", "Checking win conditions...");
-   // wait(100, SC_NS);
-    // Debug ispis table
-   /* for(int row = 0; row < 6; row++) {
-        std::string row_str;
-        for(int col = 0; col < 7; col++) {
-            unsigned char val = read_bram(VP_ADDR_BRAM_L+row * 7 + col);
-            row_str += (val == ' ') ? "." : std::string(1, val);
-            row_str += " ";
-        }
-        SC_REPORT_INFO("HARD", ("Row " + std::to_string(row) + ": " + row_str).c_str());
-    }*/
-
-    // Provera horizontalnih linija
-    uint8_t Hard::winning(sc_core::sc_time &system_offset){
-	pl_t pl;
-   // SC_REPORT_INFO("HARD", "Checking win conditions...");
-
-	if (start == 1 && ready==1){
-		ready=0;
-		offset += sc_time(DELAY,sc_core::SC_NS);
-	}
-
-	else if(start==0 && ready==0)
+uint8_t Hard::winning(sc_core::sc_time &system_offset)
+{
 	{
-		cout<<"Processing started"<<endl;
+	
 
 		//Provera horizontalnih linija
 			
@@ -158,97 +138,13 @@ void Hard::b_transport(pl_t &pl,sc_time &offset)
 		    }
 
 		    return 3; // Nerešeno
-		    ready =1;		    
+		   	    
 	}
-	ready=1;
 	return 0;
 }
 
 
-/*kod sa odredjenim ispravkama vezanih za proveru nastavka igre-
-segment provere da li je tabla popunjena i dodati ready flagovi*/ 
-/*uint8_t Hard::winning(sc_core::sc_time &system_offset) {
-    if (start == 1 && ready == 1) {
-        ready = 0;
-        offset += sc_time(DELAY, sc_core::SC_NS);
-        return 0; // Vraćamo 0 dok se procesiranje ne započne
-    }
-    else if (start == 0 && ready == 0) {
-        cout << "Processing started" << endl;
 
-        // Provera horizontalnih linija
-        for (int row = 0; row < 6; row++) {
-            for (int col = 0; col <= 3; col++) {
-                unsigned char symbol = read_bram(row * 7 + col);
-                if (symbol != ' ' &&
-                    symbol == read_bram(row * 7 + col + 1) &&
-                    symbol == read_bram(row * 7 + col + 2) &&
-                    symbol == read_bram(row * 7 + col + 3)) {
-                    ready = 1;
-                    return (symbol == 'X') ? 1 : 2;
-                }
-            }
-        }
-
-        // Provera vertikalnih linija
-        for (int col = 0; col < 7; col++) {
-            for (int row = 0; row <= 2; row++) {
-                unsigned char symbol = read_bram(row * 7 + col);
-                if (symbol != ' ' &&
-                    symbol == read_bram((row + 1) * 7 + col) &&
-                    symbol == read_bram((row + 2) * 7 + col) &&
-                    symbol == read_bram((row + 3) * 7 + col)) {
-                    ready = 1;
-                    return (symbol == 'X') ? 1 : 2;
-                }
-            }
-        }
-
-        // Provera dijagonala (desno-nadole)
-        for (int row = 0; row <= 2; row++) {
-            for (int col = 0; col <= 3; col++) {
-                unsigned char symbol = read_bram(row * 7 + col);
-                if (symbol != ' ' &&
-                    symbol == read_bram((row + 1) * 7 + col + 1) &&
-                    symbol == read_bram((row + 2) * 7 + col + 2) &&
-                    symbol == read_bram((row + 3) * 7 + col + 3)) {
-                    ready = 1;
-                    return (symbol == 'X') ? 1 : 2;
-                }
-            }
-        }
-
-        // Provera dijagonala (levo-nadole)
-        for (int row = 0; row <= 2; row++) {
-            for (int col = 3; col < 7; col++) {
-                unsigned char symbol = read_bram(row * 7 + col);
-                if (symbol != ' ' &&
-                    symbol == read_bram((row + 1) * 7 + col - 1) &&
-                    symbol == read_bram((row + 2) * 7 + col - 2) &&
-                    symbol == read_bram((row + 3) * 7 + col - 3)) {
-                    ready = 1;
-                    return (symbol == 'X') ? 1 : 2;
-                }
-            }
-        }
-
-        // Provera da li je tabla puna
-        bool board_full = true;
-        for (int i = 0; i < 42; i++) {
-            if (read_bram(i) == ' ') {
-                board_full = false;
-                break;
-            }
-        }
-
-        ready = 1;
-        return board_full ? 3 : 0; // 3 za nerešeno, 0 za nastavak igre
-    }
-
-    // Default return za sve ostale slučajeve
-    ready = 1;
-    return 0;
-}*/
 
 
 
