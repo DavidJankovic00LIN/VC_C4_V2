@@ -19,4 +19,6 @@ using namespace sc_dt;
 int toInt(unsigned char *buf);
 void toUchar(unsigned char *buf,int val);
 
+std::string to_hex(unsigned char c);
+
 #endif

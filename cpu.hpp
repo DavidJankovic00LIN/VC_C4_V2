@@ -35,7 +35,7 @@ public:
     bool provocation;
     int get_ip();
 
-    void clean();
+    //void clean();
     void Board();
     void PlayPosition(char XO);
     void main_thread();

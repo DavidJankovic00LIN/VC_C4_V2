@@ -17,3 +17,10 @@ void toUchar(unsigned char *buf,int val)
 	buf[2]=(char)(val>>8);
 	buf[3]=(char)(val);
 }
+
+
+std::string to_hex(unsigned char c) {
+    char hex[3];
+    snprintf(hex, sizeof(hex), "%02X", c);
+    return std::string(hex);
+}

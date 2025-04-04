@@ -27,35 +27,35 @@ Cpu::~Cpu()
 	SC_REPORT_INFO("Cpu", "Destroyed.");
 }
 
-
+/*
 void Cpu::clean()
 {
 	provocation=false;
 	for(int i=0; i<=80 ; i++)
 		write_bram(i,' ');
 }
-
+*/
 int Cpu::get_ip()
 {
-	SC_REPORT_INFO("CPU", "Starting HARD processing");
+	//SC_REPORT_INFO("CPU", "Starting HARD processing");
 
 	write_hard(ADDR_START,1); // Pokretanje IP-a
 	bool done = false;
 	while(!done)
 	{
 		int ready = read_hard(ADDR_READY); //proverava status ready-a i u sl redu ispisuje
-		SC_REPORT_INFO("CPU", ("Ready status: " + std::to_string(ready)).c_str());
+		//SC_REPORT_INFO("CPU", ("Ready status: " + std::to_string(ready)).c_str());
 
 		if(ready){
 			write_hard(ADDR_START,0); //zaustavi IP(postavi start na 0)
 			done=true;
 		}else{
-			wait(DELAY,SC_NS); // cekaj dok hardverska komponenta ne zavrsi
+			wait(100000,SC_NS); // cekaj dok hardverska komponenta ne zavrsi
 		}
 	}	
-	SC_REPORT_INFO("CPU","Geting winner value");
+	//SC_REPORT_INFO("CPU","Geting winner value");
 	int ip_result=read_hard(ADDR_WIN_VAL); // procitaj rezultat iz hardvera
-	SC_REPORT_INFO("CPU","HARD processing done");
+	//SC_REPORT_INFO("CPU","HARD processing done");
 	return ip_result;
 }
 
@@ -107,9 +107,10 @@ int Cpu::game_play()
     SC_REPORT_INFO("CPU", "game_play started");
 	int tempAI;
 	srand(time(0));
-	clean();
-	tempAI=AIManager();
+	//clean();
+	
 	while(true){
+		tempAI=AIManager();
 		write_bram(tempAI,'O');
 		Board();
 		get_ip();
@@ -119,19 +120,22 @@ int Cpu::game_play()
 		{
 			if(Win_Value==1)
 			{
-				cout<<endl<<"Player 2 WON!";
+				//cout<<endl<<"Player 2 WON!";
+				 SC_REPORT_INFO("CPU", "Player 2 WON");
 				return 0;
 			}
 			else if (Win_Value==2)
 			{
-				cout<<endl<<"Player 1 WON!";
+				//cout<<endl<<"Player 1 WON!";
+				 SC_REPORT_INFO("CPU", "Player 1 WON");
 				return 0;
 			}
 			else if(Win_Value==3){
-				cout<<"You Tie!";
+				//cout<<"You Tie!";
+				 SC_REPORT_INFO("CPU", "Tie");
 				return 0;
 			}
-			clean();
+		//clean();
 		}else{
 			PlayPosition('X'); //Bira se korisnicki potez
 		}
@@ -150,7 +154,7 @@ game_play();
 
 int Cpu::GetValue(int column) //uzima kolonu(1-7),i ako je ta kolona u tom redu free,upisuje u nju.
 {
-    SC_REPORT_INFO("CPU", "GetValue started");
+    //SC_REPORT_INFO("CPU", "GetValue started");
 
 	if(column>7)
 		return 0;
@@ -174,7 +178,7 @@ int Cpu::GetValue(int column) //uzima kolonu(1-7),i ako je ta kolona u tom redu 
 void Cpu::Board() // funkcija za crtanje table
 
 {
-    SC_REPORT_INFO("CPU", "Board started");
+    //SC_REPORT_INFO("CPU", "Board started");
 	cout<<endl<<"    1   "<<"    2   "<<"    3   "<<"    4   "<<"    5   "<<"    6   "<<"    7   "<<endl;
 
     int j = 42;
@@ -213,7 +217,7 @@ void Cpu::Board() // funkcija za crtanje table
 
 void Cpu::PlayPosition(char XO)
 {
-    SC_REPORT_INFO("CPU", "PlayPosition started");
+    //SC_REPORT_INFO("CPU", "PlayPosition started");
 	static std::vector<int>moves;
 	static size_t currentMoveIndex=0;
 
@@ -263,7 +267,7 @@ void Cpu::PlayPosition(char XO)
 
 int Cpu::AIManager()
 {
-    SC_REPORT_INFO("CPU", "AIManager started");
+    //SC_REPORT_INFO("CPU", "AIManager started");
 	float chance[2]={9999999 , 0 };
 	for(int column=1; column<=7; column ++)
 	{
@@ -367,7 +371,7 @@ int Cpu::AIManager()
 }
 */
 int Cpu::NegaMax(int Depth) {
-    SC_REPORT_INFO("CPU", "NEGAMAX started");
+    //SC_REPORT_INFO("CPU", "NEGAMAX started");
     char XO;
     int PlayNumber[8] = {0,0,0,0,0,0,0,0}; 
     int chance = 0;
@@ -427,25 +431,23 @@ int Cpu::NegaMax(int Depth) {
 
 void Cpu::write_bram(sc_uint<64> addr, unsigned char val)
 {
-    SC_REPORT_INFO("CPU", ("Writing to addr=" + std::to_string(addr)).c_str());
-	SC_REPORT_INFO("CPU", ("BRAM WRITE - Data: '" + std::string(1, val) + "' (ASCII " + std::to_string((int)val) + ")").c_str());
-
-
-	pl_t pl;
-	offset += sc_core::sc_time(DELAY, sc_core::SC_NS);
+	pl_t pl;	
+	offset += sc_core::sc_time(DELAY , sc_core::SC_NS);	
 	unsigned char buf;
 	read_ddr_cnt++;
 	buf = val;
 	pl.set_address(VP_ADDR_BRAM_L + addr);
+	pl.set_data_length(1); 
 	pl.set_data_ptr(&buf);
-	pl.set_command(tlm::TLM_WRITE_COMMAND);
-	pl.set_response_status(tlm::TLM_INCOMPLETE_RESPONSE);
-	interconnect_socket->b_transport(pl,offset);
+	pl.set_command( tlm::TLM_WRITE_COMMAND );
+	pl.set_response_status ( tlm::TLM_INCOMPLETE_RESPONSE );
+	interconnect_socket->b_transport(pl, offset);
 }
+
 
 void Cpu::read_bram(sc_uint<64> addr,unsigned char *all_data, int length)
 {
-    SC_REPORT_INFO("CPU", ("BRAM READ START - Addr: " + std::to_string(addr) +", Length: " + std::to_string(length)).c_str());
+    //SC_REPORT_INFO("CPU", ("BRAM READ START - Addr: " + std::to_string(addr) +", Length: " + std::to_string(length)).c_str());
 	
 	offset += sc_core::sc_time((9+1) * DELAY,sc_core::SC_NS); 
 	pl_t pl;
@@ -463,7 +465,7 @@ void Cpu::read_bram(sc_uint<64> addr,unsigned char *all_data, int length)
 		interconnect_socket->b_transport(pl,offset);
 
 		all_data[n]=buf;
-        SC_REPORT_INFO("CPU", ("BRAM READ - Addr: " + std::to_string(addr + i) + ", Data: '" + std::string(1, buf) + "' (ASCII " + std::to_string((int)buf) + ")").c_str());
+      //  SC_REPORT_INFO("CPU", ("BRAM READ - Addr: " + std::to_string(addr + i) + ", Data: '" + std::string(1, buf) + "' (ASCII " + std::to_string((int)buf) + ")").c_str());
 
 		n++;
 	}
@@ -473,7 +475,7 @@ void Cpu::read_bram(sc_uint<64> addr,unsigned char *all_data, int length)
 // proveri da li treba uint8_t mesto int kao tip funkcije, kao i neohodnu sisrinu buffera?
 int Cpu::read_hard(sc_uint<64> addr)
 {
-    SC_REPORT_INFO("CPU", ("HARD READ START - Addr: " + std::to_string(addr)).c_str());
+    //SC_REPORT_INFO("CPU", ("HARD READ START - Addr: " + std::to_string(addr)).c_str());
 	
 	pl_t pl;
 	unsigned char buf[8];
@@ -487,10 +489,10 @@ int Cpu::read_hard(sc_uint<64> addr)
 	return toInt(buf);
 }
 
-//proceri da li je neophodna ova funkcija!
+
 void Cpu::write_hard(sc_uint<64> addr,int val)
 {
-    SC_REPORT_INFO("CPU", ("HARD WRITE - Addr: " + std::to_string(addr) + ", Value: " + std::to_string(val)).c_str());
+   // SC_REPORT_INFO("CPU", ("HARD WRITE - Addr: " + std::to_string(addr) + ", Value: " + std::to_string(val)).c_str());
 	
 	pl_t pl;
 	unsigned char buf[4];

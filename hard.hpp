@@ -23,7 +23,7 @@ protected:
 	sc_time offset;
 
 	//input parameters
-	char input[43];
+	//char input[43];
 	sc_uint<1> start;
 
 	//output parameters

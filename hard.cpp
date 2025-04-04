@@ -30,7 +30,7 @@ void Hard::b_transport(pl_t &pl,sc_time &offset)
 			{
 			case ADDR_START:
 				start=toInt(buf);
-				cout<<"start= "<<start<<endl;
+				//cout<<"start= "<<start<<endl;
 				winning(offset);
 				break;
 			default:
@@ -64,91 +64,104 @@ void Hard::b_transport(pl_t &pl,sc_time &offset)
 }
 
 
-///proveriti tacno kakao se formira BaseAddres za read_bram i  da li treba??
 
-//hardverska winning funkcija
-uint8_t Hard::winning(sc_core::sc_time &offset) 
-{
-    SC_REPORT_INFO("HARD", "Checking win conditions...");
-    
+
+
+    //SC_REPORT_INFO("HARD", "Checking win conditions...");
+   // wait(100, SC_NS);
     // Debug ispis table
-    for(int row = 0; row < 6; row++) {
+   /* for(int row = 0; row < 6; row++) {
         std::string row_str;
         for(int col = 0; col < 7; col++) {
-            unsigned char val = read_bram(row * 7 + col);
+            unsigned char val = read_bram(VP_ADDR_BRAM_L+row * 7 + col);
             row_str += (val == ' ') ? "." : std::string(1, val);
             row_str += " ";
         }
         SC_REPORT_INFO("HARD", ("Row " + std::to_string(row) + ": " + row_str).c_str());
-    }
+    }*/
 
     // Provera horizontalnih linija
-    for(int row = 0; row < 6; row++) {
-        for(int col = 0; col <= 3; col++) {
-            unsigned char symbol = read_bram(row * 7 + col);
-            if(symbol != ' ' &&
-               symbol == read_bram(row * 7 + col + 1) &&
-               symbol == read_bram(row * 7 + col + 2) &&
-               symbol == read_bram(row * 7 + col + 3)) {
-                ready = 1; // Postavljamo ready na 1 nakon provere
-                return (symbol == 'X') ? 1 : 2;
-            }
-        }
-    }
+    uint8_t Hard::winning(sc_core::sc_time &system_offset){
+	pl_t pl;
+   // SC_REPORT_INFO("HARD", "Checking win conditions...");
 
-    // Provera vertikalnih linija
-    for(int col = 0; col < 7; col++) {
-        for(int row = 0; row <= 2; row++) {
-            unsigned char symbol = read_bram(row * 7 + col);
-            if(symbol != ' ' &&
-               symbol == read_bram((row + 1) * 7 + col) &&
-               symbol == read_bram((row + 2) * 7 + col) &&
-               symbol == read_bram((row + 3) * 7 + col)) {
-                ready = 1;
-                return (symbol == 'X') ? 1 : 2;
-            }
-        }
-    }
+	if (start == 1 && ready==1){
+		ready=0;
+		offset += sc_time(DELAY,sc_core::SC_NS);
+	}
 
-    // Provera dijagonala (desno-nadole)
-    for(int row = 0; row <= 2; row++) {
-        for(int col = 0; col <= 3; col++) {
-            unsigned char symbol = read_bram(row * 7 + col);
-            if(symbol != ' ' &&
-               symbol == read_bram((row + 1) * 7 + col + 1) &&
-               symbol == read_bram((row + 2) * 7 + col + 2) &&
-               symbol == read_bram((row + 3) * 7 + col + 3)) {
-                ready = 1;
-                return (symbol == 'X') ? 1 : 2;
-            }
-        }
-    }
+	else if(start==0 && ready==0)
+	{
+		cout<<"Processing started"<<endl;
 
-    // Provera dijagonala (levo-nadole)
-    for(int row = 0; row <= 2; row++) {
-        for(int col = 3; col < 7; col++) {
-            unsigned char symbol = read_bram(row * 7 + col);
-            if(symbol != ' ' &&
-               symbol == read_bram((row + 1) * 7 + col - 1) &&
-               symbol == read_bram((row + 2) * 7 + col - 2) &&
-               symbol == read_bram((row + 3) * 7 + col - 3)) {
-                ready = 1;
-                return (symbol == 'X') ? 1 : 2;
-            }
-        }
-    }
+		//Provera horizontalnih linija
+			
+			for(int row = 0; row < 6; row++){ // 6 redova
+		        for (int col = 0; col <= 3; col++) { // Maksimalno 4 startne tačke po redu
+		            unsigned char symbol = read_bram(row * 7 + col);
+		            if (symbol != ' ' &&
+		                symbol == read_bram(row * 7 + col + 1) &&
+		                symbol == read_bram(row * 7 + col + 2) &&
+		                symbol == read_bram(row * 7 + col + 3))
 
-    // Provera da li je tabla puna
-    bool board_full = true;
-    for(int i = 0; i < 42; i++) {
-        if(read_bram(i) == ' ') {
-            board_full = false;
-            break;
-        }
-    }
+		                								 {
+		                return (symbol == 'X') ? 1 : 2;
+		            }
+		        }
+		    }
 
-    ready = 1; // U svakom slučaju postavljamo ready na 1 nakon provere
-    return board_full ? 3 : 0;
+		    // Provera vertikalnih linija
+		    for (int col = 0; col < 7; col++) { // 7 kolona
+		        for (int row = 0; row <= 2; row++) { // Maksimalno 3 startne tačke po koloni
+		           unsigned char symbol = read_bram(row * 7 + col);
+		            if (symbol != ' ' &&
+		                symbol == read_bram((row + 1) * 7 + col) &&
+		                symbol == read_bram((row + 2) * 7 + col) &&
+		                symbol == read_bram((row + 3) * 7 + col)) {
+		                return (symbol == 'X') ? 1 : 2;
+		            }
+		        }
+		    }
+
+		    // Provera dijagonala (desno-nadole)
+		    for (int row = 0; row <= 2; row++) { // 3 startne tačke po redu
+		        for (int col = 0; col <= 3; col++) { // 4 startne tačke po koloni
+		            unsigned char symbol = read_bram(row * 7 + col);
+		            if (symbol != ' ' &&
+		                symbol == read_bram((row + 1) * 7 + col + 1) &&
+		                symbol == read_bram((row + 2) * 7 + col + 2) &&
+		                symbol == read_bram((row + 3) * 7 + col + 3)) {
+		                return (symbol == 'X') ? 1 : 2;
+		            }
+		        }
+		    }
+
+		    // Provera dijagonala (levo-nadole)
+		    for (int row = 0; row <= 2; row++) { // 3 startne tačke po redu
+		        for (int col = 3; col < 7; col++) { // 4 startne tačke po koloni
+		            unsigned char symbol = read_bram(row * 7 + col);
+		            if (symbol != ' ' &&
+		                symbol == read_bram((row + 1) * 7 + col - 1) &&
+		                symbol == read_bram((row + 2) * 7 + col - 2) &&
+		                symbol == read_bram((row + 3) * 7 + col - 3)) {
+		                return (symbol == 'X') ? 1 : 2;
+		            }
+		        }
+		    }
+
+		    // Provera da li je tabla puna
+		    for (int i = 0; i < 42; i++) { // 42 pozicije
+		    	unsigned char symbol=read_bram(i);
+		        if (symbol == ' ') {
+		            return 0; // Igra se nastavlja
+		        }
+		    }
+
+		    return 3; // Nerešeno
+		    ready =1;		    
+	}
+	ready=1;
+	return 0;
 }
 
 
@@ -257,15 +270,21 @@ void Hard::write_bram(sc_uint<64> addr, unsigned char val)
 
 unsigned char Hard::read_bram(sc_uint <64> addr)
 {
-
-	pl_t pl;
-	unsigned char buf;
-	pl.set_address(addr);
-	pl.set_data_length(1);
-	pl.set_data_ptr(&buf);
-	pl.set_command(tlm::TLM_READ_COMMAND);
-	pl.set_response_status(tlm::TLM_INCOMPLETE_RESPONSE);
-	bram_socket->b_transport(pl,offset);
-	return buf;
-
+    pl_t pl;
+    unsigned char buf;
+    pl.set_address(VP_ADDR_BRAM_L+addr);
+    pl.set_data_length(1);
+    pl.set_data_ptr(&buf);
+    pl.set_command(tlm::TLM_READ_COMMAND);
+    pl.set_response_status(tlm::TLM_INCOMPLETE_RESPONSE);
+    
+    // DEBUG: Before reading
+   // SC_REPORT_INFO("HARD", ("Attempting to read from BRAM addr: " + std::to_string(addr)).c_str());
+    
+    bram_socket->b_transport(pl,offset);
+    
+    // DEBUG: After reading
+   /* SC_REPORT_INFO("HARD", ("Read from BRAM addr " + std::to_string(addr) + ": '" + std::string(1, buf) + "' (0x" + to_hex(buf) + ")").c_str());*/
+    
+    return buf;
 }
