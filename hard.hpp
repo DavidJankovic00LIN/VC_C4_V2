@@ -31,7 +31,10 @@ protected:
 
 	sc_uint<3> win_value;
 
-	uint8_t winning(sc_time&);
+	sc_uint<64> last_move;  
+    uint8_t winning(sc_core::sc_time &system_offset, int last_move);
+
+	//uint8_t winning(sc_time&);
 
 	void b_transport(pl_t&, sc_time&);
 	void write_bram(sc_uint<64> addr, unsigned char val);

@@ -1,4 +1,5 @@
 #include "cpu.hpp"
+#include "defines.hpp"
 
 SC_HAS_PROCESS(Cpu);
 
@@ -38,7 +39,7 @@ void Cpu::clean()
 int Cpu::get_ip()
 {
 	//SC_REPORT_INFO("CPU", "Starting HARD processing");
-
+	write_hard(ADDR_LAST_MOVE,last_move);
 	write_hard(ADDR_START,1); // Pokretanje IP-a
 	bool done = false;
 	while(!done)
@@ -120,14 +121,14 @@ int Cpu::game_play()
 		{
 			if(Win_Value==1)
 			{
-				//cout<<endl<<"Player 2 WON!";
-				 SC_REPORT_INFO("CPU", "Player 2 WON");
+				//cout<<endl<<"Player X WON!";
+				 SC_REPORT_INFO("CPU", "Player X WON");
 				return 0;
 			}
 			else if (Win_Value==2)
 			{
-				//cout<<endl<<"Player 1 WON!";
-				 SC_REPORT_INFO("CPU", "Player 1 WON");
+				//cout<<endl<<"Player O WON!";
+				 SC_REPORT_INFO("CPU", "Player O WON");
 				return 0;
 			}
 			else if(Win_Value==3){
@@ -255,6 +256,7 @@ void Cpu::PlayPosition(char XO)
 		if (sth !=0)
 		{
 			write_bram(sth,XO);
+			last_move = sth;
 		}
 		else
 		{
@@ -278,11 +280,13 @@ int Cpu::AIManager()
 		if(PlayNumber!=0)
 		{
 			write_bram(PlayNumber,'O');
-			int ip_temp=get_ip();
+			last_move = PlayNumber;
+			 int ip_temp=get_ip();
 
 			if(ip_temp==2)
 			{
 				write_bram(PlayNumber,' ');
+				last_move = PlayNumber;
 				return PlayNumber;
 			}
 
@@ -297,6 +301,7 @@ int Cpu::AIManager()
 				chance[1]=PlayNumber;
 			}
 			write_bram(PlayNumber,' ');
+			last_move = PlayNumber;
 		}
 	}
 
@@ -377,6 +382,7 @@ int Cpu::NegaMax(int Depth) {
     int PlayNumber[8] = {0,0,0,0,0,0,0,0}; 
     int chance = 0;
     int ip_temp;
+
     if (Depth % 2 != 0)
         XO = 'X';
     else
@@ -388,6 +394,7 @@ int Cpu::NegaMax(int Depth) {
     for (int column = 1; column <= 7; column++) {
         if (PlayNumber[column] != 0) {
             write_bram(PlayNumber[column], XO);
+			last_move =PlayNumber[column] ;
 			
             ip_temp=get_ip();
 
@@ -399,6 +406,7 @@ int Cpu::NegaMax(int Depth) {
                 return -1;
             }
             write_bram(PlayNumber[column], ' ');
+			last_move =PlayNumber[column] ;
         }
     }
 
@@ -407,12 +415,13 @@ int Cpu::NegaMax(int Depth) {
             int temp = 0;
             if (PlayNumber[column] != 0) {
                 write_bram(PlayNumber[column], XO);
-                ip_temp=get_ip();
+               ip_temp=get_ip();
                 if (ip_temp != 0) {
                     PlayOut++;
                     if (XO == 'O') EVA++;
                     else EVA--;
                     write_bram(PlayNumber[column], ' ');
+					last_move =PlayNumber[column] ;
                     return -1;
                 }
                 temp = NegaMax(Depth + 1);
@@ -421,6 +430,7 @@ int Cpu::NegaMax(int Depth) {
                 if (chance < temp)
                     chance = temp;
                 write_bram(PlayNumber[column], ' ');
+				last_move =PlayNumber[column] ;
             }
         }
     }

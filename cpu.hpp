@@ -29,6 +29,7 @@ public:
 	~Cpu();
 	tlm_utils::simple_initiator_socket<Cpu> interconnect_socket;
 
+	 sc_uint<64> last_move; 
 
     int PlayOut;
     int EVA;

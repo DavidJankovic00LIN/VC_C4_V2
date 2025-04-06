@@ -17,6 +17,7 @@ using namespace sc_dt;
 #define ADDR_START 0x00
 #define ADDR_READY 0x01
 #define ADDR_WIN_VAL 0x02
+#define ADDR_LAST_MOVE 0x03 
 
 //bram size 
 #define BRAM_SIZE 0x3A980 //BRAM size 240KB
